@@ -73,7 +73,6 @@ public class MistriaLocator
             var children = Directory
                 .GetDirectories(common)
                 .Where(Directory.Exists)
-                // .Select(Path.GetFileName)
                 .Where(it => Path.GetFileName(it).Contains("Proton"))
                 .Where(it => File.Exists(Path.Combine(it, "files/bin/wine64")))
                 .Select(it => Path.Combine(it, "files/bin/wine64"))

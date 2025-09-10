@@ -32,13 +32,6 @@ public class AurieGenerator: IGenerator
     public Validation Validate(IMod mod)
     {
         var validation = new Validation();
-        if (!CanGenerate(mod)) return validation;
-
-        // if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        // {
-        //     validation.AddError(mod, "", Resources.CoreErrorModRequiresWindows);
-        // }
-        
         return validation;
     }
 }
