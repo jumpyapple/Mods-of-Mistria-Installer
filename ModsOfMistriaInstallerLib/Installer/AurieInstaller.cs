@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using Garethp.ModsOfMistriaInstallerLib.Lang;
 using Microsoft.Win32;
 using Newtonsoft.Json.Linq;
+using PeNet;
 
 namespace Garethp.ModsOfMistriaInstallerLib.Installer;
 
@@ -11,6 +12,8 @@ class FileToEnsure
     public string Path;
     public string Repository;
     public string Artifact;
+    public string Release = "latest";
+    public bool ShouldUpdate = true;
 }
 
 [InformationInstaller(1)]
@@ -26,14 +29,42 @@ public class AurieInstaller : IModuleInstaller, IPreinstallInfo, IPreUninstallIn
         Action<string, string> reportStatus
     )
     {
+        if (!File.Exists(Path.Combine(fieldsOfMistriaLocation, "FieldsOfMistria.exe")))
+        {
+            throw new FileNotFoundException("Could not find FieldsOfMistria.exe in Fields of Mistria folder");
+        }
+
+        if (!File.Exists(Path.Combine(fieldsOfMistriaLocation, "FieldsOfMistria.bak.exe")))
+        {
+            File.Copy(
+                Path.Combine(fieldsOfMistriaLocation, "FieldsOfMistria.exe"),
+                Path.Combine(fieldsOfMistriaLocation, "FieldsOfMistria.bak.exe")
+            );
+        }
+        
+        File.Delete(Path.Combine(fieldsOfMistriaLocation, "FieldsOfMistria.exe"));
+        File.Copy(
+            Path.Combine(fieldsOfMistriaLocation, "FieldsOfMistria.bak.exe"),
+            Path.Combine(fieldsOfMistriaLocation, "FieldsOfMistria.exe")
+        );
+        
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) &&
+            modsLocation != Path.Combine(fieldsOfMistriaLocation, "mods"))
+        {
+            var requiredAurieLocation = Path.Combine(fieldsOfMistriaLocation, "mods");
+            if (!Directory.Exists(requiredAurieLocation))
+            {
+                File.CreateSymbolicLink(requiredAurieLocation, modsLocation);
+            }
+            
+            modsLocation = requiredAurieLocation;
+        }
+        
         if (information.AurieMods.Count == 0)
         {
-            // TearDownRegistry();
             return;
         }
         
-        PatchAurie(fieldsOfMistriaLocation, modsLocation);
-
         if (!Directory.Exists(Path.Combine(modsLocation, "Aurie", "MOMI")))
         {
             Directory.CreateDirectory(Path.Combine(modsLocation, "Aurie", "MOMI"));
@@ -43,11 +74,17 @@ public class AurieInstaller : IModuleInstaller, IPreinstallInfo, IPreUninstallIn
         {
             Directory.CreateDirectory(Path.Combine(modsLocation, "Native"));
         }
-
-        // SetupRegistry(fieldsOfMistriaLocation, modsLocation);
-
+        
         List<FileToEnsure> filesToEnsure =
         [
+            new()
+            {
+                Path = Path.Combine(fieldsOfMistriaLocation, "AuriePatcher.exe"),
+                Repository = "AurieFramework/Aurie",
+                Artifact = "AuriePatcher.exe",
+                Release = "243727655",
+                ShouldUpdate = false
+            },
             new()
             {
                 Path = Path.Combine(modsLocation, "Aurie", "YYToolkit.dll"),
@@ -64,7 +101,8 @@ public class AurieInstaller : IModuleInstaller, IPreinstallInfo, IPreUninstallIn
             {
                 Path = Path.Combine(modsLocation, "AurieLoader.exe"),
                 Repository = "AurieFramework/Aurie",
-                Artifact = "AurieLoader.exe"
+                Artifact = "AurieLoader.exe",
+                ShouldUpdate = false
             }
         ];
 
@@ -76,12 +114,43 @@ public class AurieInstaller : IModuleInstaller, IPreinstallInfo, IPreUninstallIn
         {
             if (File.Exists(ensure.Path))
             {
-                return;
+                var needsUpdate = false;
+                if (!ensure.ShouldUpdate) return;
+                var peFile = new PeFile(ensure.Path);
+                
+                var versionString = peFile.Resources?.VsVersionInfo?.StringFileInfo.StringTable.FirstOrDefault()?.FileVersion;
+
+                if (versionString == null)
+                {
+                    needsUpdate = true;
+                }
+                else
+                {
+                    Task.Run(async () =>
+                    {
+                        var apiUrl = $"https://api.github.com/repos/{ensure.Repository}/releases/{ensure.Release}";
+
+                        var response = await client.GetStringAsync(apiUrl);
+                        var json = JObject.Parse(response);
+                        var latestVersion = json["tag_name"]?.ToString().Replace("v", "");
+
+                        if (latestVersion == null) return;
+                        var latestVersionItem = new Version(latestVersion);
+
+                        if (latestVersionItem.CompareTo(new Version(versionString)) > 0)
+                        {
+                            needsUpdate = true;
+                        }
+                    }).Wait();
+                }
+
+                if (!needsUpdate) return;
+                File.Delete(ensure.Path);
             }
 
             var task = Task.Run(async () =>
             {
-                var apiUrl = $"https://api.github.com/repos/{ensure.Repository}/releases/latest";
+                var apiUrl = $"https://api.github.com/repos/{ensure.Repository}/releases/{ensure.Release}";
 
                 var response = await client.GetStringAsync(apiUrl);
                 var json = JObject.Parse(response);
@@ -132,6 +201,8 @@ public class AurieInstaller : IModuleInstaller, IPreinstallInfo, IPreUninstallIn
 
             newFile.Close();
         });
+        
+        PatchAurie(fieldsOfMistriaLocation, modsLocation);
     }
 
     private void PatchAurie(string fieldsOfMistriaLocation, string modsLocation)
@@ -202,9 +273,6 @@ public class AurieInstaller : IModuleInstaller, IPreinstallInfo, IPreUninstallIn
 
     public List<string> GetPreinstallInformation(GeneratedInformation information)
     {
-        if (information.AurieMods.Count > 0 && !IsInstalled()) return [Resources.CorePreinstallWillInstallAurie];
-        if (information.AurieMods.Count == 0 && IsInstalled()) return [Resources.CorePreinstallWillRemoveAurie];
-
         return [];
     }
 

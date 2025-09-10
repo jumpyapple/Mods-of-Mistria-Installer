@@ -20,7 +20,8 @@ public class ModInstaller(string fieldsOfMistriaLocation, string modsLocation)
         ["animation", "generated", "player_asset_parts.json"],
         ["animation", "generated", "shadow_manifest.json"],
         ["room_data", "points.json"],
-        ["data.win"]
+        ["data.win"],
+        ["FieldsOfMistria.exe"]
     ];
 
     public void ValidateMods(List<IMod> mods)

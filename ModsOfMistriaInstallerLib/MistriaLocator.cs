@@ -1,4 +1,5 @@
-﻿using Garethp.ModsOfMistriaInstallerLib.Lang;
+﻿using System.Runtime.InteropServices;
+using Garethp.ModsOfMistriaInstallerLib.Lang;
 using Garethp.ModsOfMistriaInstallerLib.ModTypes;
 using Newtonsoft.Json.Linq;
 
@@ -53,6 +54,7 @@ public class MistriaLocator
 
         return possibleLocations
             .Where(location => Directory.Exists(location))
+            .Where(location => !RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || !new FileInfo(location).Attributes.HasFlag(FileAttributes.ReparsePoint))
             .Select(location => Path.GetFullPath(location))
             .FirstOrDefault();
     }
