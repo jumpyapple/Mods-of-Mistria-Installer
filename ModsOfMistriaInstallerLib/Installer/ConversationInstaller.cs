@@ -23,8 +23,13 @@ public class ConversationInstaller : IModuleInstaller
                 Path.Combine(fieldsOfMistriaLocation, "t2_output.bak.json")
             );
         }
-        
-        if (information.Conversations.Count == 0) return;
+
+        if (information.Conversations.Count == 0)
+        {
+            File.Delete(Path.Combine(fieldsOfMistriaLocation, "t2_output.json"));
+            File.Copy(Path.Combine(fieldsOfMistriaLocation, "t2_output.bak.json"), Path.Combine(fieldsOfMistriaLocation, "t2_output.json"));
+            return;
+        };
         
         var existingInformation = JObject.Parse(
             File.ReadAllText(Path.Combine(fieldsOfMistriaLocation, "t2_output.bak.json"))

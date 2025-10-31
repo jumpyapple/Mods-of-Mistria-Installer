@@ -6,7 +6,7 @@ namespace Garethp.ModsOfMistriaInstallerLib.Generator;
 class Prompt
 {
     public string local;
-    public string next_line;
+    public NextLineBehaviorContent[] next_lines;
 }
 
 class LineAction
@@ -36,8 +36,14 @@ class NextLineBehaviorFinish : NextLineBehavior
 
 class NextLineBehaviorNextLine : NextLineBehavior
 {
-    public string type = "next_line";
-    public string content;
+    public string type = "next_lines";
+    public NextLineBehaviorContent[] content;
+}
+
+class NextLineBehaviorContent
+{
+    public string line_id;
+    public string[] requirements = [];
 }
 
 class NextLineBehaviorPrompts : NextLineBehavior
@@ -107,7 +113,11 @@ public class SimpleConversationsGenerator : IGenerator
                 ],
                 next_line_behavior = new NextLineBehaviorNextLine
                 {
-                    content = "1"
+                    content = [
+                        new NextLineBehaviorContent {
+                            line_id = "1"
+                        }
+                    ]
                 }
             };
             
@@ -127,7 +137,11 @@ public class SimpleConversationsGenerator : IGenerator
                     (initLineObject.next_line_behavior as NextLineBehaviorPrompts).content.Add(new Prompt
                     {
                         local = prompt["text"].ToString(),
-                        next_line = $"{int.Parse(prompt["nextLine"].ToString()) - 1}"
+                        next_lines = [
+                            new NextLineBehaviorContent {
+                                line_id = $"{int.Parse(prompt["nextLine"].ToString()) - 1}"
+                            }
+                        ]
                     });
                 }
             }
@@ -156,7 +170,11 @@ public class SimpleConversationsGenerator : IGenerator
                     ? new NextLineBehaviorFinish()
                     : new NextLineBehaviorNextLine
                     {
-                        content = $"{index + 1}"
+                        content = [
+                            new NextLineBehaviorContent {
+                                line_id = $"{index + 1}"
+                            }
+                        ]
                     };
 
                 if (line["choices"] is not null)
@@ -175,7 +193,11 @@ public class SimpleConversationsGenerator : IGenerator
                         (nextLine as NextLineBehaviorPrompts).content.Add(new Prompt
                         {
                             local = prompt["text"].ToString(),
-                            next_line = prompt["nextLine"].ToString()
+                            next_lines = [
+                                new NextLineBehaviorContent {
+                                    line_id = prompt["nextLine"].ToString()
+                                }
+                            ]
                         });
                     }
                 }
