@@ -124,20 +124,27 @@ public class AurieInstaller : IModuleInstaller, IPreinstallInfo, IPreUninstallIn
                 {
                     Task.Run(async () =>
                     {
-                        var apiUrl = $"https://api.github.com/repos/{ensure.Repository}/releases/{ensure.Release}";
-
-                        var response = await client.GetStringAsync(apiUrl);
-                        var json = JObject.Parse(response);
-                        var latestVersion = json["tag_name"]?.ToString().Replace("v", "");
-
-                        if (latestVersion == null) return;
-                        
-                        latestVersion = Regex.Replace(latestVersion, @"[a-zA-Z]", "");
-                        var latestVersionItem = new Version(latestVersion);
-
-                        if (latestVersionItem.CompareTo(new Version(versionString)) > 0)
+                        try
                         {
-                            needsUpdate = true;
+                            var apiUrl = $"https://api.github.com/repos/{ensure.Repository}/releases/{ensure.Release}";
+
+                            var response = await client.GetStringAsync(apiUrl);
+                            var json = JObject.Parse(response);
+                            var latestVersion = json["tag_name"]?.ToString().Replace("v", "");
+
+                            if (latestVersion == null) return;
+
+                            latestVersion = Regex.Replace(latestVersion, @"[a-zA-Z]", "");
+                            var latestVersionItem = new Version(latestVersion);
+
+                            if (latestVersionItem.CompareTo(new Version(versionString)) > 0)
+                            {
+                                needsUpdate = true;
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            // Ignored
                         }
                     }).Wait();
                 }
