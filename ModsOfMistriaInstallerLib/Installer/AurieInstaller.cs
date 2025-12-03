@@ -99,13 +99,6 @@ public class AurieInstaller : IModuleInstaller, IPreinstallInfo, IPreUninstallIn
                 Path = Path.Combine(modsLocation, "Native", "AurieCore.dll"),
                 Repository = "AurieFramework/Aurie",
                 Artifact = "AurieCore.dll"
-            },
-            new()
-            {
-                Path = Path.Combine(modsLocation, "AurieLoader.exe"),
-                Repository = "AurieFramework/Aurie",
-                Artifact = "AurieLoader.exe",
-                ShouldUpdate = false
             }
         ];
 
