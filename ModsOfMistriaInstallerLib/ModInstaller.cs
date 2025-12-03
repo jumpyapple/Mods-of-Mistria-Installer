@@ -191,6 +191,6 @@ public class ModInstaller(string fieldsOfMistriaLocation, string modsLocation)
         });
         
         new ChecksumInstaller().Uninstall(fieldsOfMistriaLocation);
-        new AurieInstaller().Uninstall();
+        new AurieInstaller().Uninstall(fieldsOfMistriaLocation);
     }
 }
