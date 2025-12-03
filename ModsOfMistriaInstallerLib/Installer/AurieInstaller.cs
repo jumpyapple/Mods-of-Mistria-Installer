@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using Garethp.ModsOfMistriaInstallerLib.Lang;
 using Microsoft.Win32;
 using Newtonsoft.Json.Linq;
@@ -85,7 +86,6 @@ public class AurieInstaller : IModuleInstaller, IPreinstallInfo, IPreUninstallIn
                 Path = Path.Combine(fieldsOfMistriaLocation, "AuriePatcher.exe"),
                 Repository = "AurieFramework/Aurie",
                 Artifact = "AuriePatcher.exe",
-                Release = "243727655",
                 ShouldUpdate = false
             },
             new()
@@ -131,6 +131,8 @@ public class AurieInstaller : IModuleInstaller, IPreinstallInfo, IPreUninstallIn
                         var latestVersion = json["tag_name"]?.ToString().Replace("v", "");
 
                         if (latestVersion == null) return;
+                        
+                        latestVersion = Regex.Replace(latestVersion, @"[a-zA-Z]", "");
                         var latestVersionItem = new Version(latestVersion);
 
                         if (latestVersionItem.CompareTo(new Version(versionString)) > 0)
