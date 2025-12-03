@@ -69,14 +69,14 @@ public class AurieInstaller : IModuleInstaller, IPreinstallInfo, IPreUninstallIn
             return;
         }
         
-        if (!Directory.Exists(Path.Combine(modsLocation, "Aurie", "MOMI")))
+        if (!Directory.Exists(Path.Combine(modsLocation, "aurie", "MOMI")))
         {
-            Directory.CreateDirectory(Path.Combine(modsLocation, "Aurie", "MOMI"));
+            Directory.CreateDirectory(Path.Combine(modsLocation, "aurie", "MOMI"));
         }
 
-        if (!Directory.Exists(Path.Combine(modsLocation, "Native")))
+        if (!Directory.Exists(Path.Combine(modsLocation, "native")))
         {
-            Directory.CreateDirectory(Path.Combine(modsLocation, "Native"));
+            Directory.CreateDirectory(Path.Combine(modsLocation, "native"));
         }
         
         List<FileToEnsure> filesToEnsure =
@@ -90,13 +90,13 @@ public class AurieInstaller : IModuleInstaller, IPreinstallInfo, IPreUninstallIn
             },
             new()
             {
-                Path = Path.Combine(modsLocation, "Aurie", "YYToolkit.dll"),
+                Path = Path.Combine(modsLocation, "aurie", "YYToolkit.dll"),
                 Repository = "AurieFramework/YYToolkit",
                 Artifact = "YYToolkit.dll"
             },
             new()
             {
-                Path = Path.Combine(modsLocation, "Native", "AurieCore.dll"),
+                Path = Path.Combine(modsLocation, "native", "AurieCore.dll"),
                 Repository = "AurieFramework/Aurie",
                 Artifact = "AurieCore.dll"
             }
@@ -168,12 +168,12 @@ public class AurieInstaller : IModuleInstaller, IPreinstallInfo, IPreUninstallIn
             task.Wait();
         });
 
-        foreach (var file in Directory.GetFiles(Path.Combine(modsLocation, "Aurie", "MOMI")))
+        foreach (var file in Directory.GetFiles(Path.Combine(modsLocation, "aurie", "MOMI")))
         {
             File.Delete(file);
         }
 
-        foreach (var directory in Directory.GetDirectories(Path.Combine(modsLocation, "Aurie", "MOMI")))
+        foreach (var directory in Directory.GetDirectories(Path.Combine(modsLocation, "aurie", "MOMI")))
         {
             foreach (var file in Directory.GetFiles(directory))
             {
@@ -185,14 +185,14 @@ public class AurieInstaller : IModuleInstaller, IPreinstallInfo, IPreUninstallIn
 
         information.AurieMods.ForEach(aurieMod =>
         {
-            if (!Directory.Exists(Path.Combine(modsLocation, "Aurie", "MOMI", aurieMod.Mod.GetId())))
+            if (!Directory.Exists(Path.Combine(modsLocation, "aurie", "MOMI", aurieMod.Mod.GetId())))
             {
-                Directory.CreateDirectory(Path.Combine(modsLocation, "Aurie", "MOMI", aurieMod.Mod.GetId()));
+                Directory.CreateDirectory(Path.Combine(modsLocation, "aurie", "MOMI", aurieMod.Mod.GetId()));
             }
 
             using var newFile =
                 new FileStream(
-                    Path.Combine(modsLocation, "Aurie", "MOMI", aurieMod.Mod.GetId(),
+                    Path.Combine(modsLocation, "aurie", "MOMI", aurieMod.Mod.GetId(),
                         Path.GetFileName(aurieMod.Location)), FileMode.CreateNew);
 
             aurieMod.Mod.ReadFileAsStream(aurieMod.Location).CopyTo(newFile);
@@ -206,7 +206,7 @@ public class AurieInstaller : IModuleInstaller, IPreinstallInfo, IPreUninstallIn
     private void PatchAurie(string fieldsOfMistriaLocation, string modsLocation)
     {
         var patcherLocation = Path.Combine(fieldsOfMistriaLocation, "AuriePatcher.exe");
-        var dllLocation = Path.Combine(modsLocation, "Native", "AurieCore.dll");
+        var dllLocation = Path.Combine(modsLocation, "native", "AurieCore.dll");
         var exeLocation = Path.Combine(fieldsOfMistriaLocation, "FieldsOfMistria.exe");
 
         var wineLocation = MistriaLocator.GetWineLocation();
