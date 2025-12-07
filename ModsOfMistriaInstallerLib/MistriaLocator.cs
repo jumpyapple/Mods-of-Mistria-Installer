@@ -1,4 +1,5 @@
-﻿using Garethp.ModsOfMistriaInstallerLib.Lang;
+﻿using System.Runtime.InteropServices;
+using Garethp.ModsOfMistriaInstallerLib.Lang;
 using Garethp.ModsOfMistriaInstallerLib.ModTypes;
 using Newtonsoft.Json.Linq;
 
@@ -53,10 +54,36 @@ public class MistriaLocator
 
         return possibleLocations
             .Where(location => Directory.Exists(location))
+            .Where(location => !RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || !new FileInfo(location).Attributes.HasFlag(FileAttributes.ReparsePoint))
             .Select(location => Path.GetFullPath(location))
             .FirstOrDefault();
     }
 
+    public static string? GetWineLocation()
+    {
+        var steamLocations = GetSteamLocations().Where(Directory.Exists).ToList();
+
+        List<string> protonLocations = [];
+        
+        steamLocations.ForEach(location =>
+        {
+            var common = Path.Combine(location, "common");
+            if (!Directory.Exists(common)) return;
+
+            var children = Directory
+                .GetDirectories(common)
+                .Where(Directory.Exists)
+                .Where(it => Path.GetFileName(it).Contains("Proton"))
+                .Where(it => File.Exists(Path.Combine(it, "files/bin/wine64")))
+                .Select(it => Path.Combine(it, "files/bin/wine64"))
+                .ToList();
+
+            protonLocations.AddRange(children);
+        });
+
+        return protonLocations.FirstOrDefault(); 
+    }
+    
     private static IEnumerable<string> GetSteamLocations()
     {
         var locations = new List<string>
