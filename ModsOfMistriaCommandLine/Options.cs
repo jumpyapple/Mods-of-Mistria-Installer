@@ -2,6 +2,19 @@
 
 namespace Garethp.ModsOfMistriaCommandLine
 {
+
+    [Verb("version", HelpText = "Display version information.")]
+    class VersionOptions
+    {
+
+    }
+
+    [Verb("help", HelpText = "Display this help message.")]
+    class HelpOptions
+    {
+
+    }
+
     [Verb("install", HelpText = "Install all the mods found in the mods folder.")]
     class InstallOptions
     {
@@ -10,12 +23,6 @@ namespace Garethp.ModsOfMistriaCommandLine
 
     [Verb("uninstall", HelpText = "Uninstall all the mods.")]
     class UninstallOptions
-    {
-
-    }
-
-    [Verb("version", HelpText = "Display version information.")]
-    class VersionOptions
     {
 
     }

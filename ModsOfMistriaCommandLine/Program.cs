@@ -13,17 +13,26 @@ class Program
     {
         Logger.LogAdded += (_, e) => Console.WriteLine(e.Message);
 
+        // Default to the install verb.
+        if (args.Length == 0)
+        {
+            args = ["install"];
+        }
+
         var parser = new Parser(settings =>
         {
             settings.HelpWriter = null;
+            settings.AutoHelp = false;
             settings.AutoVersion = false;
         });
-        var parserResult = parser.ParseArguments<InstallOptions, UninstallOptions, VersionOptions, ListOptions>(args);
+        var parserResult = parser.ParseArguments<VersionOptions, HelpOptions, InstallOptions, UninstallOptions, ListOptions>(args);
         await parserResult
             .MapResult(
+                (VersionOptions options) => RunVersionAndReturnExitCode(options),
+                (HelpOptions options) => RunFullHelpAndReturnExitCode(options,
+                    parser.ParseArguments<VersionOptions, HelpOptions, InstallOptions, UninstallOptions, ListOptions>(Array.Empty<string>())),
                 (InstallOptions options) => RunInstallAndReturnExitCode(options),
                 (UninstallOptions options) => RunUninstallAndReturnExitCode(options),
-                (VersionOptions options) => RunVersionAndReturnExitCode(options),
                 (ListOptions options) => RunListAndReturnExitCode(options),
                 errors =>
                 {
@@ -36,17 +45,48 @@ class Program
                             currentExe!.GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version ?? "0.1.0";
 
                         h.Heading = new HeadingInfo(title, version);
-                        h.AutoHelp = false;
+                        h.AutoHelp = true;
                         h.AutoVersion = false;
                         return HelpText.DefaultParsingErrorsHandler(parserResult, h);
                     }, e => e);
 
-                    Console.WriteLine("Test");
                     Console.WriteLine(helpText);
 
                     return Task.FromResult(1);
                 }
             );
+    }
+
+    static async Task<int> RunVersionAndReturnExitCode(VersionOptions options)
+    {
+        var currentExe = Assembly.GetEntryAssembly();
+        var currentVersionString =
+            currentExe!.GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version ?? "0.1.0";
+
+        Console.WriteLine(currentVersionString);
+
+        return 0;
+    }
+
+    static async Task<int> RunFullHelpAndReturnExitCode<T>(HelpOptions options, ParserResult<T> parserResult)
+    {
+        var helpText = HelpText.AutoBuild(parserResult, h =>
+        {
+            var currentExe = Assembly.GetEntryAssembly();
+            var title =
+                currentExe!.GetCustomAttribute<AssemblyTitleAttribute>()?.Title ?? "ModsOfMistriaInstaller-cli";
+            var version =
+                currentExe!.GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version ?? "0.1.0";
+
+            h.Heading = new HeadingInfo(title, version);
+            h.AutoHelp = false;
+            h.AutoVersion = false;
+            return HelpText.DefaultParsingErrorsHandler(parserResult, h);
+        }, e => e, verbsIndex: false);
+
+        Console.WriteLine(helpText);
+
+        return 0;
     }
 
     static async Task<int> RunInstallAndReturnExitCode(InstallOptions options)
@@ -93,17 +133,6 @@ class Program
         {
             Console.ReadKey();
         }
-
-        return 0;
-    }
-
-    static async Task<int> RunVersionAndReturnExitCode(VersionOptions options)
-    {
-        var currentExe = Assembly.GetEntryAssembly();
-        var currentVersionString =
-            currentExe!.GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version ?? "0.1.0";
-
-        Console.WriteLine(currentVersionString);
 
         return 0;
     }
